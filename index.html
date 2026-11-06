@@ -317,6 +317,22 @@ a.cta{color:var(--night)}
 .seg3 button[data-s="0"][aria-pressed="true"]{background:var(--line);color:var(--night);border-color:var(--line)}
 .seg3 button[data-s="1"][aria-pressed="true"]{background:var(--warn);color:var(--night);border-color:var(--warn)}
 .seg3 button[data-s="2"][aria-pressed="true"]{background:var(--ball);color:var(--night);border-color:var(--ball)}
+.pn-warn{font-size:13px;color:var(--warn);min-height:0}
+.pn-warn:empty{display:none}
+/* animación de fila reservada */
+.rcard{width:min(360px,100%);position:relative}
+.rcourt{position:relative;aspect-ratio:2/1;max-width:100%;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,var(--court-hi),var(--court));box-shadow:0 30px 60px -24px rgba(0,0,0,.7)}
+.rcourt svg{position:absolute;inset:0;width:100%;height:100%}
+.rb{position:absolute;left:var(--x);top:56%;width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7ff9a,var(--ball) 45%,#a9b52a);display:grid;place-items:center;font-family:var(--f-score);font-weight:700;font-size:21px;color:var(--night);opacity:0;box-shadow:0 12px 14px -8px rgba(0,0,0,.55)}
+.ov.on .rb{animation:drop .9s cubic-bezier(.3,0,.45,1) var(--d) forwards}
+@keyframes drop{0%{opacity:1;transform:translateY(-300%) scale(.7)}55%{opacity:1;transform:translateY(0) scale(1.12,.84)}70%{transform:translateY(-26%) scale(.96,1.04)}86%{transform:translateY(0) scale(1.04,.96)}100%{opacity:1;transform:none}}
+.stamp{position:absolute;left:50%;top:100%;transform:translate(-50%,-50%) rotate(-6deg) scale(2.4);opacity:0;font-family:var(--f-display);font-style:italic;font-weight:900;font-size:34px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:3px solid var(--warn);border-radius:8px;padding:0 14px;background:rgba(9,20,49,.82);white-space:nowrap}
+.ov.on .stamp{animation:stamp .45s cubic-bezier(.2,1.5,.4,1) 1.55s forwards}
+@keyframes stamp{to{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}}
+.rcard{margin-bottom:20px}
+.rv-msg{max-width:340px;color:var(--dim);margin:0;font-size:15px;display:flex;gap:10px;align-items:flex-start;text-align:left}
+.rv-msg i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--warn);margin-top:6px;animation:pulse 1.2s infinite}
+.rv-msg b{color:var(--ink)}
 .cta[aria-disabled="true"]{opacity:.35;pointer-events:none;box-shadow:none}
 
 @media (prefers-reduced-motion: reduce){
@@ -483,12 +499,13 @@ a.cta{color:var(--night)}
   </div>
   <p class="pn-hint">Tocá una fila para marcarla o mandar el ticket.</p>
   <div class="grid pgrid" id="pnGrid"></div>
-  <a class="cta" id="pnShare" href="#" target="_blank" rel="noopener" style="justify-content:center">Compartir sorteo por WhatsApp</a>
-  <div class="pn-two"><button class="ghost" type="button" id="pnCopy">Copiar link</button><a class="ghost" id="pnView" href="#" target="_blank" rel="noopener">Ver como cliente</a></div>
+  <a class="cta" id="pnShare" href="#" target="_blank" rel="noopener" style="justify-content:center">Compartir sorteo</a>
+  <p class="pn-hint" style="margin-top:-6px">Elegí Estado de WhatsApp, un grupo o un contacto. Para listas de difusión, usá "Copiar mensaje".</p>
+  <div class="pn-two"><button class="ghost" type="button" id="pnCopy">Copiar mensaje</button><a class="ghost" id="pnView" href="#" target="_blank" rel="noopener">Ver como cliente</a></div>
   <input class="pn-out" id="pnOut" readonly hidden aria-label="Link del sorteo">
   <div class="pn-box">
     <span class="eyebrow">Datos del sorteo</span>
-    <div class="field"><label for="pnPhone">Tu WhatsApp, con código de país</label><input id="pnPhone" inputmode="numeric" autocomplete="tel" placeholder="5493411234567"></div>
+    <div class="field"><label for="pnPhone">Tu número (para recibir las reservas)</label><input id="pnPhone" inputmode="numeric" autocomplete="tel" placeholder="5491132801499"><span class="pn-warn" id="pnPhoneMsg"></span></div>
     <div class="field"><label for="pnDraw">Fecha y hora del sorteo</label><input id="pnDraw" type="datetime-local"></div>
   </div>
   <div class="pn-box">
@@ -553,6 +570,32 @@ a.cta{color:var(--night)}
     <div class="ov-acts" id="ovActs">
       <button class="cta" type="button" id="simDraw">Simular el sorteo</button>
       <button class="ghost" type="button" id="ovClose">Volver a las filas</button>
+    </div>
+  </div>
+</div>
+
+<!-- fila reservada (cliente) -->
+<div class="ov" id="rv" role="dialog" aria-modal="true" aria-label="Fila reservada">
+  <div class="ov-in">
+    <div class="ov-cap"><span class="eyebrow">Pedido enviado al local</span><h2 class="h2" id="rvH">Fila 7</h2></div>
+    <div class="rcard">
+      <div class="rcourt">
+        <svg viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
+          <rect width="200" height="100" fill="url(#turf)"/>
+          <g fill="none" stroke="#eef3ff" stroke-width="1.4" vector-effect="non-scaling-stroke" opacity=".85">
+            <path d="M2 2H198V98H2Z"/><path d="M31 2V98"/><path d="M169 2V98"/><path d="M31 50H169"/><path d="M100 0V100" stroke-width="3"/>
+          </g>
+        </svg>
+        <div class="rb" style="--x:22%;--d:.1s"><span id="rb0">07</span></div>
+        <div class="rb" style="--x:50%;--d:.35s"><span id="rb1">40</span></div>
+        <div class="rb" style="--x:78%;--d:.6s"><span id="rb2">73</span></div>
+      </div>
+      <div class="stamp">Reservada</div>
+    </div>
+    <p class="rv-msg"><i></i><span><b>Esperando confirmación del local.</b> Mandá el mensaje en WhatsApp y transferí. Cuando el local confirme el pago, te llega tu ticket.</span></p>
+    <div class="ov-acts on">
+      <a class="cta" id="rvWa" href="#" target="_blank" rel="noopener" style="justify-content:center">Abrir WhatsApp de nuevo</a>
+      <button class="ghost" type="button" id="rvClose">Volver al sorteo</button>
     </div>
   </div>
 </div>
@@ -765,8 +808,10 @@ a.cta{color:var(--night)}
       r.setAttribute('aria-label', `Fila ${i}, números ${nums(i).map(pad).join(', ')}, ${mine ? 'tuya' : FREE.has(i) ? 'libre' : RES.has(i) ? 'reservada' : 'vendida'}`);
     });
     const chip = $('mychip');
-    chip.classList.toggle('on', !!state.mine);
+    chip.classList.toggle('on', !!(state.mine || state.pend));
     if (state.mine) $('mychipT').innerHTML = `Tu fila: <b>${state.mine}</b> · ${nums(state.mine).map(pad).join(' · ')}`;
+    else if (state.pend) $('mychipT').innerHTML = `Pediste la fila <b>${state.pend}</b> · esperando tu ticket`;
+    chip.querySelector('u').textContent = state.mine ? 'Ver ticket' : 'Ver';
   }
   render();
 
@@ -779,7 +824,7 @@ a.cta{color:var(--night)}
   });
   const gotoRows = () => document.getElementById('filas').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
   $('ctaHero').onclick = gotoRows; $('ctaBar').onclick = gotoRows;
-  $('mychip').onclick = () => openReveal(false);
+  $('mychip').onclick = () => state.mine ? openReveal(false) : state.pend && openReserved(state.pend);
   $('fAll').onclick = () => setFilter(false); $('fFree').onclick = () => setFilter(true);
   function setFilter(v) { state.onlyFree = v; grid.classList.toggle('only-free', v); $('fAll').setAttribute('aria-pressed', !v); $('fFree').setAttribute('aria-pressed', v); }
 
@@ -832,13 +877,40 @@ a.cta{color:var(--night)}
     if (MODE === 'live') resLink();
     $('scrim').classList.add('on'); $('sheet').classList.add('on'); modal(true);
   }
+  const resHref = (i, nm) => waLink(CFG.phone, `¡Hola! Quiero reservar la fila ${i} (${nums(i).map(pad).join(' · ')}) del Sorteo N° 143 🎾${nm ? ` Soy ${nm}.` : ''}`);
   function resLink() {
     const i = state.selected; if (!i) return;
-    const nm = $('nombre').value.trim();
-    $('waRes').href = waLink(CFG.phone, `¡Hola! Quiero reservar la fila ${i} (${nums(i).map(pad).join(' · ')}) del Sorteo N° 143 🎾${nm ? ` Soy ${nm}.` : ''}`);
+    $('waRes').href = resHref(i, $('nombre').value.trim());
   }
   $('nombre').addEventListener('input', resLink);
-  $('waRes').addEventListener('click', () => { setTimeout(() => { closeSheet(); toast('Mandá el mensaje en WhatsApp para reservar'); }, 400); });
+  /* el WhatsApp se abre con el toque (gesto real); la página queda mostrando la reserva */
+  const PEND = 'wrapi-rifa-pend-143';
+  $('waRes').addEventListener('click', () => {
+    const i = state.selected, nm = $('nombre').value.trim();
+    state.pend = i; state.pendName = nm;
+    try { localStorage.setItem(PEND, JSON.stringify({ fila: i, name: nm })); } catch (e) {}
+    closeSheet(); render();
+    openReserved(i);
+  });
+  function openReserved(i) {
+    $('rvH').textContent = `Fila ${i}`;
+    nums(i).forEach((n, k) => $('rb' + k).textContent = pad(n));
+    $('rvWa').href = resHref(i, state.pendName || '');
+    const rv = $('rv'); rv.classList.remove('on'); void rv.offsetWidth; rv.classList.add('on');
+    modal(true); setTimeout(() => buzz([12, 60, 12, 60, 12]), 600);
+  }
+  $('rvClose').onclick = () => { $('rv').classList.remove('on'); modal(false); };
+  if (MODE === 'live') {
+    try { const p = JSON.parse(localStorage.getItem(PEND)); if (p && p.fila) { state.pend = p.fila; state.pendName = p.name || ''; render(); } } catch (e) {}
+  }
+
+  /* compartir: en el celular abre el menú del sistema (Estado, grupos, contactos); si no, WhatsApp */
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[data-msg]');
+    if (!a || !navigator.share || !matchMedia('(pointer: coarse)').matches) return;
+    e.preventDefault();
+    navigator.share({ text: a.dataset.msg }).catch(() => {});
+  });
   function closeSheet() { $('scrim').classList.remove('on'); $('sheet').classList.remove('on'); $('pnSheet').classList.remove('on'); state.selected = null; modal(false); }
   $('shClose').onclick = closeSheet; $('scrim').onclick = closeSheet;
   $('shForm').addEventListener('submit', e => { e.preventDefault(); MODE === 'live' ? $('waRes').click() : $('confirm').click(); });
@@ -1044,7 +1116,10 @@ a.cta{color:var(--night)}
     const tLink = i => `${BASE}#t-${i}-${P.codes[i]}-${toMin(P.draw)}${P.names[i] ? '-' + toHex(P.names[i]) : ''}`;
     function shareHref() {
       const libres = ALL.filter(i => P.rows[i] === 0).length;
-      $('pnShare').href = waLink('', `🎾 Sorteo N° 143 · Ganador elige\nQuedan ${libres} filas a $10.000. Elegí la tuya acá:\n${pub()}`);
+      const msg = `🎾 Sorteo N° 143 · Ganador elige\nQuedan ${libres} filas a $10.000. Elegí la tuya acá:\n${pub()}`;
+      $('pnShare').href = waLink('', msg); $('pnShare').dataset.msg = msg;
+      const ph = P.phone;
+      $('pnPhoneMsg').textContent = !ph ? 'Sin este número, las reservas no te llegan.' : /^54(?!9)/.test(ph) ? 'En Argentina va 549 adelante (ej.: 5491132801499).' : '';
       $('pnView').href = pub();
     }
     function paint() {
@@ -1072,7 +1147,8 @@ a.cta{color:var(--night)}
       if (ok) {
         if (!P.codes[cur]) { P.codes[cur] = newCode(); save(); }
         const nm = P.names[cur] ? ` ${P.names[cur]}` : '';
-        $('pnTicket').href = waLink('', `¡Listo${nm}! 🎾 Este es tu ticket del Sorteo N° 143 · fila ${cur} (${nums(cur).map(pad).join(' · ')}):\n${tLink(cur)}`);
+        const tm = `¡Listo${nm}! 🎾 Este es tu ticket del Sorteo N° 143 · fila ${cur} (${nums(cur).map(pad).join(' · ')}):\n${tLink(cur)}`;
+        $('pnTicket').href = waLink('', tm); $('pnTicket').dataset.msg = tm;
       }
     }
     pg.addEventListener('click', e => {
@@ -1107,8 +1183,9 @@ a.cta{color:var(--night)}
 
     /* copiar */
     $('pnCopy').onclick = () => {
-      const t = pub(), out = $('pnOut');
-      const ok = () => { $('pnCopy').textContent = 'Copiado'; setTimeout(() => $('pnCopy').textContent = 'Copiar link', 1600); };
+      shareHref();
+      const t = $('pnShare').dataset.msg, out = $('pnOut');
+      const ok = () => { $('pnCopy').textContent = 'Copiado'; setTimeout(() => $('pnCopy').textContent = 'Copiar mensaje', 1600); };
       const fallback = () => { out.hidden = false; out.value = t; out.focus(); out.select(); $('pnCopy').textContent = 'Copialo de abajo'; };
       try { navigator.clipboard.writeText(t).then(ok, fallback); } catch (e) { fallback(); }
     };
@@ -1122,7 +1199,8 @@ a.cta{color:var(--night)}
       msg.innerHTML = !f ? 'Termina en 00: ese número no está en juego.'
         : `Termina en <b>${pad(n)}</b> → gana la <b>fila ${f}</b>${P.names[f] ? ` (${escapeHTML(P.names[f])})` : P.rows[f] ? '' : ' · ojo: figura libre'}.`;
       btn.hidden = !f;
-      btn.href = waLink('', `🏆 Resultado del Sorteo N° 143\n${BASE}#g-${w}-${toMin(P.draw)}${P.phone ? '-' + P.phone : ''}`);
+      const rm = `🏆 Resultado del Sorteo N° 143\n${BASE}#g-${w}-${toMin(P.draw)}${P.phone ? '-' + P.phone : ''}`;
+      btn.href = waLink('', rm); btn.dataset.msg = rm;
     }
     $('pnWin').addEventListener('input', e => { e.target.value = onlyDigits(e.target.value).slice(0, 4); winPaint(); });
 
