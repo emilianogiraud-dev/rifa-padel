@@ -1,0 +1,1172 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style></head><body>
+<title>Ganador Elige</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800;1,900&family=Chakra+Petch:wght@600;700&display=swap">
+<style>
+/* Layout: cancha nocturna. Una sola columna móvil; la cancha en perspectiva es el fondo del hero,
+   el marcador es el countdown, las 33 filas son la barra de progreso y la grilla. */
+:root{
+  color-scheme: dark;
+  --night:#091431;       /* cielo nocturno / fondo */
+  --night-2:#0e1d45;
+  --court:#173a8a;       /* césped azul */
+  --court-hi:#2456bd;
+  --line:#eef3ff;        /* líneas de cancha */
+  --ball:#e3ef4e;        /* amarillo pelota */
+  --ink:#eef3ff;
+  --dim:#a3b5de;
+  --mute:#6278ad;
+  --sold:#1b2c5c;
+  --warn:#f0b54a;        /* reservada */
+  --glass:rgba(196,222,255,.07);
+  --glass-edge:rgba(196,222,255,.17);
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-score:"Chakra Petch","Barlow Condensed",ui-monospace,monospace;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--night);
+  background-image:
+    radial-gradient(60% 40% at 8% -6%, rgba(160,200,255,.22), transparent 70%),
+    radial-gradient(60% 40% at 92% -6%, rgba(160,200,255,.18), transparent 70%);
+  background-repeat:no-repeat;
+  color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  overflow-x:clip;-webkit-tap-highlight-color:transparent;
+}
+body[data-modal]{overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--ball);outline-offset:3px;border-radius:8px}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.eyebrow{font-family:var(--f-display);font-weight:700;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.h2{font-family:var(--f-display);font-style:italic;font-weight:800;font-size:34px;line-height:.95;text-transform:uppercase;margin:0;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- Top bar ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;padding-block:14px 6px;position:relative;z-index:2}
+.brand{display:flex;align-items:center;gap:10px}
+.badge{width:38px;height:38px;border-radius:50%;background:var(--line);display:grid;place-items:center;box-shadow:0 0 0 3px rgba(238,243,255,.12)}
+.badge svg{width:22px;height:22px}
+.brand b{font-family:var(--f-display);font-style:italic;font-weight:800;font-size:19px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+.brand small{display:block;font-size:11px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.demo{font-family:var(--f-display);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);border:1px solid var(--glass-edge);padding:4px 9px;border-radius:99px}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;isolation:isolate;overflow:hidden;padding-bottom:22px}
+.hero-court{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.hero-court svg{display:block;width:100%;height:100%}
+.hero-court::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom, rgba(9,20,49,0) 0%, rgba(9,20,49,.2) 45%, rgba(9,20,49,.75) 75%, var(--night) 98%)}
+.draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.3s cubic-bezier(.6,0,.2,1) forwards}
+.draw path:nth-child(2){animation-delay:.15s}.draw path:nth-child(3){animation-delay:.3s}
+.draw path:nth-child(4){animation-delay:.38s}.draw path:nth-child(5){animation-delay:.5s}
+@keyframes draw{to{stroke-dashoffset:0}}
+.hero-in{display:flex;flex-direction:column;gap:16px;padding-top:18px}
+.title{font-family:var(--f-display);font-style:italic;font-weight:900;text-transform:uppercase;font-size:clamp(66px,21vw,104px);line-height:.82;letter-spacing:-.01em;margin:0;position:relative}
+.title span{display:block}
+.title .l2{color:rgba(9,20,49,.72);-webkit-text-stroke:2px var(--line);padding-left:.32em}
+.title,.lede{text-shadow:0 2px 14px rgba(9,20,49,.8)}
+.title{width:fit-content}
+.title .ballmark{position:absolute;width:.26em;height:.26em;right:-.36em;top:.04em}
+.lede{margin:0;color:var(--dim);max-width:30ch;font-size:16px}
+.lede b{color:var(--ink);font-weight:600}
+
+/* scoreboard */
+.score{background:linear-gradient(180deg,#07102a,#0b1840);border:1px solid var(--glass-edge);border-radius:var(--r);padding:12px 12px 10px;box-shadow:0 18px 40px -18px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06)}
+.score-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.score-h .eyebrow{font-size:11px}
+.score-h .when{font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.cell{background:#050c22;border-radius:9px;padding:8px 4px 6px;text-align:center;position:relative;overflow:hidden}
+.cell::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.6);box-shadow:0 1px 0 rgba(255,255,255,.03)}
+.cell .d{font-family:var(--f-score);font-weight:700;font-size:34px;line-height:1;color:var(--ball);text-shadow:0 0 14px rgba(227,239,78,.35);display:block}
+.cell .d.tick{animation:tick .35s ease-out}
+@keyframes tick{0%{transform:translateY(-30%);opacity:.2}100%{transform:none;opacity:1}}
+.cell .u{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:600}
+
+/* progress of 33 rows */
+.prog-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:8px}
+.prog-h .left{font-size:14px;color:var(--dim)}
+.prog-h .left b{color:var(--ink)}
+.prog-h .right{font-family:var(--f-display);font-style:italic;font-weight:800;font-size:20px;text-transform:uppercase;color:var(--ball)}
+.segs{display:grid;grid-template-columns:repeat(33,1fr);gap:2px;height:12px}
+.seg{border-radius:2px;background:var(--line);opacity:.9;transition:background .4s, opacity .4s}
+.seg.free{background:transparent;box-shadow:inset 0 0 0 1px rgba(227,239,78,.7);opacity:1}
+.seg.mine{background:var(--ball);opacity:1}
+.seg.flash{animation:segflash 1.2s ease-out}
+@keyframes segflash{0%,30%{background:var(--ball);transform:scaleY(1.6)}100%{transform:none}}
+
+.cta{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:var(--ball);color:var(--night);border-radius:var(--r);padding:16px 18px;font-family:var(--f-display);font-style:italic;font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.01em;box-shadow:0 12px 30px -12px rgba(227,239,78,.55);transition:transform .15s}
+.cta:active{transform:scale(.98)}
+.cta .p{font-style:normal;font-weight:700;font-size:17px;background:var(--night);color:var(--ball);padding:5px 10px;border-radius:9px}
+.mini{font-size:13px;color:var(--mute);text-align:center;margin-top:-6px}
+.mychip{display:none;align-items:center;gap:10px;background:var(--glass);border:1px solid var(--ball);border-radius:var(--r);padding:10px 12px;width:100%;text-align:left}
+.mychip.on{display:flex}
+.mychip .dot{width:10px;height:10px;border-radius:50%;background:var(--ball);box-shadow:0 0 10px var(--ball)}
+.mychip span{flex:1;font-size:15px}
+.mychip u{font-family:var(--f-display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:14px;text-decoration:none;color:var(--ball)}
+
+/* ---------- Sections ---------- */
+section.s{padding-block:30px 6px;display:flex;flex-direction:column;gap:14px}
+.s-head{display:flex;flex-direction:column;gap:6px}
+.s-head p{margin:0;color:var(--dim);font-size:15px}
+
+/* paddles carousel */
+.rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 16px 10px;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));scrollbar-width:none;scroll-padding:0 16px}
+.rail::-webkit-scrollbar{display:none}
+.pcard{flex:0 0 78%;max-width:300px;scroll-snap-align:start;background:linear-gradient(160deg,var(--court-hi),var(--court) 60%);border-radius:18px;padding:16px;position:relative;overflow:hidden;display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;border:1px solid var(--glass-edge)}
+.pcard::before{content:"";position:absolute;left:-30%;top:-40%;width:90%;height:120%;border:2px solid var(--line);border-radius:0;transform:rotate(-12deg);opacity:.07;pointer-events:none}
+.pcard .pv{height:178px;display:grid;place-items:center;position:relative}
+.pcard .pv svg{height:178px;width:auto;transform:rotate(-12deg);filter:drop-shadow(0 14px 14px rgba(0,0,0,.45))}
+.pcard h3{margin:0;font-family:var(--f-display);font-style:italic;font-weight:800;font-size:25px;line-height:.95;text-transform:uppercase}
+.tag{display:inline-block;font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--night);background:var(--ball);padding:2px 7px;border-radius:5px;margin-bottom:6px}
+.specs{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:4px;font-size:13px}
+.specs li{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(238,243,255,.12);padding-bottom:3px}
+.specs li span{color:var(--dim)}
+.specs li b{font-weight:600}
+.dots{display:flex;gap:6px;justify-content:center}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--mute);transition:all .3s}
+.dots i.on{background:var(--ball);width:18px;border-radius:3px}
+
+/* finder */
+.finder{display:flex;gap:10px;align-items:center;background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r);padding:8px 8px 8px 14px}
+.finder label{flex:1;font-size:14px;color:var(--dim);line-height:1.25}
+.finder label b{display:block;color:var(--ink);font-weight:600;font-size:15px}
+.finder input{width:74px;height:50px;border-radius:10px;border:1px solid var(--glass-edge);background:#050c22;color:var(--ball);font-family:var(--f-score);font-weight:700;font-size:26px;text-align:center;letter-spacing:.08em}
+.finder input::placeholder{color:#2c3d6c}
+.fmsg{font-size:14px;color:var(--dim);min-height:20px;margin-top:-4px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.fmsg .go{background:var(--ball);color:var(--night);border-color:var(--ball);flex:none}
+.fmsg b{color:var(--ball)}
+.filters{display:flex;gap:8px}
+.chip{font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:7px 14px;border-radius:99px;border:1px solid var(--glass-edge);color:var(--dim)}
+.chip[aria-pressed="true"]{background:var(--line);color:var(--night);border-color:var(--line)}
+
+/* grid of rows */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.row{position:relative;border-radius:12px;padding:9px 6px 8px;text-align:center;background:var(--glass);border:1px solid var(--glass-edge);display:flex;flex-direction:column;gap:3px;transition:transform .15s, background .3s, border-color .3s}
+.row .f{font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.row .n{font-family:var(--f-score);font-weight:700;font-size:17px;letter-spacing:.02em;white-space:nowrap}
+.row .n i{font-style:normal;color:var(--mute);margin:0 2px}
+.row.free{border-color:rgba(227,239,78,.45)}
+.row.free .f{color:var(--ball)}
+.row.free:active{transform:scale(.96)}
+.row.sold{background:rgba(27,44,92,.45);border-color:transparent;cursor:default}
+.row.sold .n,.row.sold .n i{color:#3c4f84}
+.row.sold .f{color:#3c4f84}
+.row.sold .f::after{content:" · vendida";text-transform:none;letter-spacing:.02em}
+.row.mine{background:var(--ball);border-color:var(--ball);color:var(--night)}
+.row.mine .f,.row.mine .n,.row.mine .n i{color:var(--night)}
+.row.mine::after{content:"Tuya";position:absolute;top:-8px;right:-4px;font-family:var(--f-display);font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;background:var(--night);color:var(--ball);padding:2px 6px;border-radius:5px}
+.row.hl{animation:hl 1.6s ease-out}
+@keyframes hl{0%,40%{box-shadow:0 0 0 3px var(--ball), 0 0 24px rgba(227,239,78,.6)}100%{box-shadow:0 0 0 0 transparent}}
+.row.gone{animation:gone 1.2s ease-out}
+@keyframes gone{0%{background:var(--ball)}100%{background:var(--sold)}}
+.grid.only-free .row.sold{display:none}
+
+/* how */
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:st}
+.steps li{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start;background:var(--glass);border-radius:var(--r);padding:12px}
+.steps li::before{counter-increment:st;content:counter(st);width:40px;height:40px;border-radius:50%;background:var(--line);color:var(--night);display:grid;place-items:center;font-family:var(--f-display);font-style:italic;font-weight:900;font-size:22px}
+.steps b{display:block;font-weight:600}
+.steps span{color:var(--dim);font-size:14px}
+.rule{font-size:14px;color:var(--dim);border-left:2px solid var(--ball);padding-left:12px}
+footer{padding-block:28px 120px;text-align:center;color:var(--mute);font-size:13px;display:grid;gap:4px}
+footer b{color:var(--dim);font-weight:600}
+
+/* sticky bar */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to top, var(--night) 60%, rgba(9,20,49,0));transform:translateY(110%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.bar.on{transform:none}
+.bar .cta{max-width:528px;margin:0 auto;padding:13px 16px;font-size:19px}
+
+/* toast */
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translate(-50%,-160%);z-index:40;background:var(--line);color:var(--night);font-weight:600;font-size:14px;padding:10px 14px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:flex;gap:8px;align-items:center;transition:transform .4s cubic-bezier(.2,.8,.2,1);width:max-content;max-width:calc(100% - 32px)}
+.toast.on{transform:translate(-50%,0)}
+.toast i{width:8px;height:8px;border-radius:50%;background:#e2563b;flex:none;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(3,8,24,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:30;opacity:0;pointer-events:none;transition:opacity .3s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;transform:translateY(105%);visibility:hidden;transition:transform .4s cubic-bezier(.2,.85,.25,1), visibility 0s .4s}
+.sheet.on{transform:none;visibility:visible;transition:transform .4s cubic-bezier(.2,.85,.25,1)}
+.sheet-in{max-width:560px;margin:0 auto;background:var(--night-2);border-radius:22px 22px 0 0;border:1px solid var(--glass-edge);border-bottom:0;padding:10px max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.grab{width:42px;height:4px;border-radius:2px;background:var(--mute);margin:0 auto}
+.sh-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sh-top .h2{font-size:30px}
+.x{width:36px;height:36px;border-radius:50%;background:var(--glass);display:grid;place-items:center;font-size:20px;color:var(--dim);flex:none}
+.sh-nums{display:flex;gap:8px}
+.sh-nums div{flex:1;background:#050c22;border-radius:12px;padding:10px 0;text-align:center;font-family:var(--f-score);font-weight:700;font-size:30px;color:var(--ball)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;color:var(--dim);font-weight:600;letter-spacing:.04em}
+.field input{height:48px;border-radius:12px;border:1px solid var(--glass-edge);background:#050c22;color:var(--ink);padding:0 14px;font:inherit;font-size:16px}
+.pay{display:flex;align-items:center;gap:10px;background:var(--glass);border:1px dashed var(--glass-edge);border-radius:12px;padding:10px 10px 10px 14px}
+.pay div{flex:1;min-width:0;font-size:13px;color:var(--dim)}
+.pay div b{display:block;color:var(--ink);font-size:16px;font-weight:600;user-select:all;overflow-wrap:anywhere}
+.ghost{font-family:var(--f-display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--glass-edge);border-radius:10px;padding:8px 12px;color:var(--ink)}
+.note{font-size:12px;color:var(--mute);text-align:center;margin:-4px 0 0}
+
+/* ---------- Reveal (ticket) ---------- */
+.ov{position:fixed;inset:0;z-index:50;background:radial-gradient(120% 70% at 50% 0%, #13286a, var(--night) 60%);overflow-y:auto;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s, visibility 0s .35s}
+.ov.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .35s}
+.ov:not(.on) *{pointer-events:none!important}
+.ov-in{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:calc(24px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ov-cap{text-align:center;display:grid;gap:4px;min-height:52px}
+.ov-cap .h2{font-size:30px}
+.ticket{width:min(360px,100%);border-radius:20px;background:var(--line);color:var(--night);position:relative;box-shadow:0 30px 60px -20px rgba(0,0,0,.7);transform:translateY(20px) scale(.96);opacity:0;transition:transform .6s cubic-bezier(.2,.9,.25,1.2), opacity .4s}
+.ov.on .ticket{transform:none;opacity:1}
+.t-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 10px;font-family:var(--f-display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:12px}
+.t-head b{font-style:italic;font-weight:800;font-size:16px;letter-spacing:.02em}
+.t-court{position:relative;margin:0 10px;border-radius:12px;overflow:hidden;aspect-ratio:2/1;max-width:100%;background:linear-gradient(135deg,var(--court-hi),var(--court))}
+.t-court svg{position:absolute;inset:0;width:100%;height:100%}
+.t-court .glassfx{position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.55) 48%,transparent 60%);transform:translateX(-120%);pointer-events:none}
+.t-court .glassfx.go{animation:glass .8s ease-out forwards}
+@keyframes glass{to{transform:translateX(120%)}}
+.spot{position:absolute;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-score);font-weight:700;font-size:19px;color:rgba(238,243,255,.5);border:1.5px dashed rgba(238,243,255,.45);transition:all .3s}
+.spot.hit{background:var(--ball);color:var(--night);border:2px solid var(--night);transform:scale(1);animation:pop .5s cubic-bezier(.3,1.6,.4,1)}
+.spot.hit::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--ball);animation:ring .7s ease-out forwards}
+@keyframes pop{0%{transform:scale(.3)}100%{transform:scale(1)}}
+@keyframes ring{to{inset:-26px;opacity:0}}
+.ball{position:absolute;left:0;top:0;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7ff9a,var(--ball) 45%,#a9b52a);z-index:3;opacity:0;overflow:hidden}
+.ball::before{content:"";position:absolute;width:100%;height:100%;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);left:-55%;top:0}
+.ball::after{content:"";position:absolute;width:100%;height:100%;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);right:-55%;top:0}
+.bshadow{position:absolute;left:0;top:0;width:16px;height:7px;margin:-3px 0 0 -8px;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(1.5px);z-index:2;opacity:0}
+.t-net{height:22px;position:relative;margin:4px 0}
+.t-net::before{content:"";position:absolute;left:14px;right:14px;top:50%;border-top:2px dashed rgba(9,20,49,.35)}
+.t-net::after{content:"";position:absolute;inset:0;background:
+   radial-gradient(circle at 0 50%, var(--night) 0 11px, transparent 11.5px),
+   radial-gradient(circle at 100% 50%, var(--night) 0 11px, transparent 11.5px)}
+.ov .t-net::after{background:
+   radial-gradient(circle at 0 50%, #0f2257 0 11px, transparent 11.5px),
+   radial-gradient(circle at 100% 50%, #0f2257 0 11px, transparent 11.5px)}
+.t-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .7s cubic-bezier(.2,.8,.2,1)}
+.t-body.open{grid-template-rows:1fr}
+.t-body > div{overflow:hidden}
+.t-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;padding:4px 18px 18px}
+.t-grid .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#4d5f92;font-weight:600}
+.t-grid .v{font-family:var(--f-display);font-weight:700;font-size:20px;line-height:1.05;text-transform:uppercase;overflow-wrap:anywhere}
+.t-grid .big{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;border-bottom:1px solid rgba(9,20,49,.12);padding-bottom:8px}
+.t-grid .big .v{font-style:italic;font-weight:900;font-size:44px;line-height:.9}
+.t-grid .big .nums{margin-left:auto;font-family:var(--f-score);font-weight:700;font-size:22px}
+.t-grid .full{grid-column:1/-1}
+.t-grid .code{font-family:var(--f-score);font-size:15px;letter-spacing:.06em}
+.t-count{grid-column:1/-1;background:var(--night);color:var(--ball);border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-family:var(--f-score);font-weight:700;font-size:16px}
+.t-count span{font-family:var(--f-body);font-size:12px;color:var(--dim);font-weight:500;letter-spacing:.04em}
+.ov-acts{display:grid;gap:10px;width:min(360px,100%);opacity:0;transform:translateY(10px);transition:all .5s .1s;pointer-events:none}
+.ov-acts.on{opacity:1;transform:none;pointer-events:auto}
+.ov-acts .cta{justify-content:center;font-size:20px;padding:14px}
+.ov-acts .ghost{text-align:center;padding:12px}
+
+/* ---------- Draw simulation ---------- */
+.board{width:min(360px,100%);background:linear-gradient(180deg,#07102a,#0b1840);border:1px solid var(--glass-edge);border-radius:18px;padding:16px;display:grid;gap:12px;text-align:center}
+.reels{display:flex;gap:8px;justify-content:center}
+.reel{width:62px;height:84px;background:#050c22;border-radius:10px;overflow:hidden;position:relative;font-family:var(--f-score);font-weight:700;font-size:60px;color:var(--line);transition:box-shadow .4s, color .4s}
+.reel .strip{position:absolute;left:0;right:0;top:0;transition:transform 1.6s cubic-bezier(.15,.75,.2,1)}
+.reel .strip div{height:84px;line-height:84px}
+.reel.key{color:var(--ball);box-shadow:0 0 0 2px var(--ball), 0 0 24px rgba(227,239,78,.45)}
+.verdict{font-size:15px;color:var(--dim);min-height:44px}
+.verdict b{color:var(--ball);font-family:var(--f-display);font-style:italic;font-weight:800;font-size:26px;text-transform:uppercase;display:block;line-height:1}
+
+/* picker */
+.pick{width:100%;max-width:560px}
+.pick .rail{flex-direction:column;overflow:visible;margin:0;padding:0;gap:10px}
+.pick .pcard{flex:none;width:100%;max-width:none;grid-template-columns:76px 1fr;padding:10px 14px;cursor:pointer;text-align:left;color:var(--ink);transition:box-shadow .2s, transform .15s}
+.pick .pcard:active{transform:scale(.98)}
+.pick .pcard .pv,.pick .pcard .pv svg{height:128px}
+.pick .pcard .specs{margin-top:6px}
+.cta:disabled{opacity:.4;box-shadow:none;cursor:default}
+.pick .pcard[aria-pressed="true"]{border-color:var(--ball);box-shadow:0 0 0 2px var(--ball)}
+.won{width:min(360px,100%);text-align:center;display:grid;gap:10px;justify-items:center}
+.won svg{height:220px;width:auto;filter:drop-shadow(0 20px 20px rgba(0,0,0,.5));animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px) rotate(3deg)}}
+canvas.fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60}
+
+/* ---------- modo real + panel ---------- */
+a.cta,a.ghost{text-decoration:none;color:inherit}
+a.cta{color:var(--night)}
+.sh-part{display:flex;flex-direction:column;gap:14px}
+.upd{font-size:12px;color:var(--mute);margin-top:8px}
+.row.sold.res{background:rgba(240,181,74,.08)}
+.row.sold.res .f,.row.sold.res .n,.row.sold.res .n i{color:#a98a55}
+.row.sold.res .f::after{content:" · reservada"}
+.pn{padding-block:4px 60px;display:flex;flex-direction:column;gap:14px}
+.pn-h{font-size:44px}
+.pn-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pn-stats div{background:var(--glass);border:1px solid var(--glass-edge);border-radius:12px;padding:10px;text-align:center}
+.pn-stats b{display:block;font-family:var(--f-score);font-size:28px;color:var(--ball);line-height:1.1}
+.pn-stats div:nth-child(2) b{color:var(--warn)}
+.pn-stats div:nth-child(3) b{color:var(--ink)}
+.pn-stats span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.pn-hint{margin:0;font-size:14px;color:var(--dim)}
+.pgrid .row{min-height:64px}
+.pgrid .row .who{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:14px}
+.pgrid .row.pres{background:rgba(240,181,74,.14);border-color:var(--warn)}
+.pgrid .row.pres .f{color:var(--warn)}
+.pgrid .row.psold{background:var(--ball);border-color:var(--ball);color:var(--night)}
+.pgrid .row.psold .f,.pgrid .row.psold .n,.pgrid .row.psold .n i{color:var(--night)}
+.pn-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pn-two > *{text-align:center;padding:12px}
+.pn-out{width:100%;height:44px;border-radius:10px;border:1px solid var(--glass-edge);background:#050c22;color:var(--dim);padding:0 12px;font-size:13px}
+.pn-box{background:var(--glass);border:1px solid var(--glass-edge);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:12px}
+.pn-win{font-size:15px;color:var(--dim)}
+.pn-win b{color:var(--ball)}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg3 button{padding:12px 4px;border-radius:10px;border:1px solid var(--glass-edge);font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.seg3 button[data-s="0"][aria-pressed="true"]{background:var(--line);color:var(--night);border-color:var(--line)}
+.seg3 button[data-s="1"][aria-pressed="true"]{background:var(--warn);color:var(--night);border-color:var(--warn)}
+.seg3 button[data-s="2"][aria-pressed="true"]{background:var(--ball);color:var(--night);border-color:var(--ball)}
+.cta[aria-disabled="true"]{opacity:.35;pointer-events:none;box-shadow:none}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .draw path{stroke-dashoffset:0}
+}
+</style>
+
+<!-- defs reutilizables -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="turf" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="none"/>
+      <circle cx="2" cy="2" r=".6" fill="rgba(255,255,255,.06)"/>
+      <circle cx="6" cy="6" r=".6" fill="rgba(0,0,0,.12)"/>
+    </pattern>
+    <pattern id="carbon" width="6" height="6" patternUnits="userSpaceOnUse">
+      <rect width="6" height="6" fill="#141c30"/>
+      <rect width="3" height="3" fill="#1f2944"/>
+      <rect x="3" y="3" width="3" height="3" fill="#1f2944"/>
+    </pattern>
+    <linearGradient id="turfg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2456bd"/><stop offset="1" stop-color="#173a8a"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<header class="hero">
+  <div class="hero-court" aria-hidden="true"><svg id="heroCourt" viewBox="0 0 400 700" preserveAspectRatio="xMidYMin slice"></svg></div>
+
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <span class="badge" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="1.5" fill="#173a8a"/><path d="M6 12H18M12 5.2V18.8M6 5.2H18M6 18.8H18" stroke="#eef3ff" stroke-width="1"/><path d="M4.5 12H19.5" stroke="#091431" stroke-width="1.8"/><circle cx="15.2" cy="8" r="2.4" fill="#e3ef4e"/></svg></span>
+        <div><b>Bandeja Pádel</b><small>Store · Rosario</small></div>
+      </div>
+      <span class="demo">Demo</span>
+    </div>
+
+    <div class="hero-in">
+      <div class="eyebrow">Sorteo N° 143 · Lotería Nocturna</div>
+      <h1 class="title" aria-label="Ganador elige">
+        <span>Ganador</span><span class="l2">elige</span>
+        <svg class="ballmark" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#e3ef4e"/><path d="M3 4.5C7 8 7 12 3 15.5M17 4.5C13 8 13 12 17 15.5" fill="none" stroke="#fff" stroke-width="1.4" opacity=".9"/></svg>
+      </h1>
+      <p class="lede">Tres palas de primera línea en juego. <b>Vos elegís cuál te llevás.</b></p>
+
+      <div class="score" role="timer" aria-live="off">
+        <div class="score-h"><span class="eyebrow">Sorteo en</span><span class="when" id="when">—</span></div>
+        <div class="cells">
+          <div class="cell"><span class="d num" id="cd-d">00</span><span class="u">Días</span></div>
+          <div class="cell"><span class="d num" id="cd-h">00</span><span class="u">Horas</span></div>
+          <div class="cell"><span class="d num" id="cd-m">00</span><span class="u">Min</span></div>
+          <div class="cell"><span class="d num" id="cd-s">00</span><span class="u">Seg</span></div>
+        </div>
+      </div>
+
+      <div id="progBox">
+        <div class="prog-h"><span class="left"><b class="num" id="soldN">23</b> de 33 filas vendidas</span><span class="right" id="leftN">Quedan 10</span></div>
+        <div class="segs" id="segs" aria-hidden="true"></div>
+        <div class="upd" id="upd" hidden></div>
+      </div>
+
+      <button class="mychip" id="mychip" type="button"><i class="dot"></i><span id="mychipT"></span><u>Ver ticket</u></button>
+      <button class="cta" id="ctaHero" type="button">Elegir mi fila <span class="p">$10.000</span></button>
+      <div class="mini" id="mini">Cada fila trae 3 números del 01 al 99</div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="s" aria-labelledby="h-palas">
+    <div class="s-head">
+      <span class="eyebrow">El premio</span>
+      <h2 class="h2" id="h-palas">Una pala. La que vos quieras.</h2>
+      <p>El ganador elige entre estos tres modelos.</p>
+    </div>
+    <div class="rail" id="rail"></div>
+    <div class="dots" id="dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+  </section>
+
+  <section class="s" aria-labelledby="h-filas" id="filas">
+    <div class="s-head">
+      <span class="eyebrow">33 filas · 99 números</span>
+      <h2 class="h2" id="h-filas">Elegí tu fila</h2>
+    </div>
+    <div class="finder">
+      <label for="buscar"><b>¿Tenés un número de la suerte?</b>Escribilo y te mostramos su fila.</label>
+      <input id="buscar" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="00" autocomplete="off">
+    </div>
+    <div class="fmsg" id="fmsg" aria-live="polite"></div>
+    <div class="filters" role="group" aria-label="Filtrar filas">
+      <button class="chip" type="button" id="fAll" aria-pressed="true">Todas</button>
+      <button class="chip" type="button" id="fFree" aria-pressed="false">Libres</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="s" aria-labelledby="h-como">
+    <div class="s-head">
+      <span class="eyebrow">Así se juega</span>
+      <h2 class="h2" id="h-como">Cómo funciona</h2>
+    </div>
+    <ol class="steps">
+      <li><div><b>Elegís una fila libre</b><span>Cada fila tiene 3 números. Más números, más chances.</span></div></li>
+      <li><div><b>Transferís $10.000</b><span>Al alias del local. Te confirmamos el pago por WhatsApp.</span></div></li>
+      <li><div><b>Recibís tu ticket digital</b><span>Con tus números, la fecha del sorteo y un código único.</span></div></li>
+    </ol>
+    <p class="rule">Gana la fila que tenga las <b>dos últimas cifras del 1.er premio</b> de la Lotería Nocturna Nacional.</p>
+  </section>
+
+  <footer>
+    <b>Demo hecha por Wrapi</b>
+    <span>Marca, palas y datos son de ejemplo</span>
+  </footer>
+</main>
+
+<div class="bar" id="bar"><button class="cta" type="button" id="ctaBar"><span id="barT">Quedan 10 filas</span> <span class="p">Elegir</span></button></div>
+<div class="toast" id="toast" role="status"><i></i><span id="toastT"></span></div>
+
+<!-- sheet -->
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <div class="sheet-in">
+    <div class="grab"></div>
+    <div class="sh-top">
+      <div><span class="eyebrow">Reservar</span><h2 class="h2" id="shTitle">Fila 14</h2></div>
+      <button class="x" type="button" id="shClose" aria-label="Cerrar">×</button>
+    </div>
+    <div class="sh-nums" id="shNums"></div>
+    <form id="shForm" class="field" novalidate>
+      <label for="nombre">Tu nombre</label>
+      <input id="nombre" name="nombre" autocomplete="given-name" placeholder="Ej.: Sofía">
+    </form>
+    <div id="shDemo" class="sh-part">
+      <div class="pay">
+        <div>Transferí $10.000 al alias<b id="alias">bandeja.padel.demo</b></div>
+        <button class="ghost" type="button" id="copy">Copiar</button>
+      </div>
+      <button class="cta" type="button" id="confirm" style="justify-content:center">Ya transferí · Ver mi ticket</button>
+      <p class="note">En la versión real, el local confirma el pago antes de emitir el ticket.</p>
+    </div>
+    <div id="shLive" class="sh-part" hidden>
+      <a class="cta" id="waRes" href="#" target="_blank" rel="noopener" style="justify-content:center">Reservar por WhatsApp</a>
+      <p class="note">Se abre WhatsApp con el mensaje listo. El local te confirma la fila y te pasa el alias para transferir.</p>
+    </div>
+  </div>
+</div>
+
+<!-- panel del local -->
+<section class="wrap pn" id="panel" hidden>
+  <div class="top">
+    <div class="brand">
+      <span class="badge" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="1.5" fill="#173a8a"/><path d="M6 12H18M12 5.2V18.8M6 5.2H18M6 18.8H18" stroke="#eef3ff" stroke-width="1"/><path d="M4.5 12H19.5" stroke="#091431" stroke-width="1.8"/><circle cx="15.2" cy="8" r="2.4" fill="#e3ef4e"/></svg></span>
+      <div><b>Bandeja Pádel</b><small>Panel del local</small></div>
+    </div>
+    <span class="demo">Privado</span>
+  </div>
+  <div><span class="eyebrow">Sorteo N° 143 · Ganador elige</span><h1 class="h2 pn-h">Tus filas</h1></div>
+  <div class="pn-stats">
+    <div><b class="num" id="pnV">0</b><span>Vendidas</span></div>
+    <div><b class="num" id="pnR">0</b><span>Reservadas</span></div>
+    <div><b class="num" id="pnL">33</b><span>Libres</span></div>
+  </div>
+  <p class="pn-hint">Tocá una fila para marcarla o mandar el ticket.</p>
+  <div class="grid pgrid" id="pnGrid"></div>
+  <a class="cta" id="pnShare" href="#" target="_blank" rel="noopener" style="justify-content:center">Compartir sorteo por WhatsApp</a>
+  <div class="pn-two"><button class="ghost" type="button" id="pnCopy">Copiar link</button><a class="ghost" id="pnView" href="#" target="_blank" rel="noopener">Ver como cliente</a></div>
+  <input class="pn-out" id="pnOut" readonly hidden aria-label="Link del sorteo">
+  <div class="pn-box">
+    <span class="eyebrow">Datos del sorteo</span>
+    <div class="field"><label for="pnPhone">Tu WhatsApp, con código de país</label><input id="pnPhone" inputmode="numeric" autocomplete="tel" placeholder="5493411234567"></div>
+    <div class="field"><label for="pnDraw">Fecha y hora del sorteo</label><input id="pnDraw" type="datetime-local"></div>
+  </div>
+  <div class="pn-box">
+    <span class="eyebrow">Resultado</span>
+    <div class="field"><label for="pnWin">1.er premio de la Nocturna (4 cifras)</label><input id="pnWin" inputmode="numeric" maxlength="4" placeholder="4714" autocomplete="off"></div>
+    <div class="pn-win" id="pnWinMsg"></div>
+    <a class="cta" id="pnWinShare" href="#" target="_blank" rel="noopener" style="justify-content:center" hidden>Compartir resultado</a>
+  </div>
+  <button class="ghost" type="button" id="pnReset">Empezar un sorteo nuevo</button>
+</section>
+
+<div class="sheet" id="pnSheet" role="dialog" aria-modal="true" aria-labelledby="pnT">
+  <div class="sheet-in">
+    <div class="grab"></div>
+    <div class="sh-top">
+      <div><span class="eyebrow">Panel</span><h2 class="h2" id="pnT">Fila 5</h2></div>
+      <button class="x" type="button" id="pnClose" aria-label="Cerrar">×</button>
+    </div>
+    <div class="sh-nums" id="pnNums"></div>
+    <div class="seg3" id="pnSeg" role="group" aria-label="Estado de la fila">
+      <button type="button" data-s="0">Libre</button><button type="button" data-s="1">Reservada</button><button type="button" data-s="2">Vendida</button>
+    </div>
+    <div class="field"><label for="pnName">Nombre del comprador</label><input id="pnName" autocomplete="off" placeholder="Ej.: Sofía"></div>
+    <a class="cta" id="pnTicket" href="#" target="_blank" rel="noopener" style="justify-content:center">Enviar ticket por WhatsApp</a>
+    <p class="note" id="pnTicketNote">Marcá la fila como vendida para mandar el ticket.</p>
+  </div>
+</div>
+
+<!-- reveal -->
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-label="Tu ticket">
+  <div class="ov-in">
+    <div class="ov-cap"><span class="eyebrow" id="ovEy">Emitiendo ticket</span><h2 class="h2" id="ovH">¡Saque!</h2></div>
+    <div class="ticket" id="ticket">
+      <div class="t-head"><b>Bandeja Pádel</b><span>Sorteo N° 143</span></div>
+      <div class="t-court" id="tcourt">
+        <svg viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
+          <rect width="200" height="100" fill="url(#turf)"/>
+          <g class="draw" id="tlines" fill="none" stroke="#eef3ff" stroke-width="1.4" vector-effect="non-scaling-stroke">
+            <path pathLength="1" d="M2 2H198V98H2Z"/>
+            <path pathLength="1" d="M31 2V98"/>
+            <path pathLength="1" d="M169 2V98"/>
+            <path pathLength="1" d="M31 50H169"/>
+            <path pathLength="1" d="M100 0V100" stroke-width="3"/>
+          </g>
+        </svg>
+        <div class="spot" id="sp0">?</div><div class="spot" id="sp1">?</div><div class="spot" id="sp2">?</div>
+        <div class="bshadow" id="bsh"></div><div class="ball" id="ball"></div>
+        <div class="glassfx" id="gfx"></div>
+      </div>
+      <div class="t-net"></div>
+      <div class="t-body" id="tbody"><div>
+        <div class="t-grid">
+          <div class="big"><div><div class="k">Fila</div><div class="v num" id="tFila">14</div></div><div class="nums num" id="tNums">14 · 47 · 80</div></div>
+          <div><div class="k">Jugador/a</div><div class="v" id="tName">Sofía</div></div>
+          <div><div class="k">Valor</div><div class="v num">$10.000</div></div>
+          <div class="full"><div class="k">Sorteo</div><div class="v" id="tWhen">Sábado 7/11 · 21 h</div></div>
+          <div class="full"><div class="k">Código</div><div class="v code num" id="tCode">BP-143-14-7Q2K</div></div>
+          <div class="t-count"><span>Faltan</span><b class="num" id="tCount">00d 00:00:00</b></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="ov-acts" id="ovActs">
+      <button class="cta" type="button" id="simDraw">Simular el sorteo</button>
+      <button class="ghost" type="button" id="ovClose">Volver a las filas</button>
+    </div>
+  </div>
+</div>
+
+<!-- draw -->
+<div class="ov" id="dv" role="dialog" aria-modal="true" aria-label="Sorteo">
+  <div class="ov-in" id="dvIn">
+    <div class="ov-cap"><span class="eyebrow">Lotería Nocturna Nacional</span><h2 class="h2">1.er premio</h2></div>
+    <div class="board">
+      <div class="reels" id="reels"></div>
+      <div class="verdict" id="verdict" aria-live="polite">Sorteando…</div>
+    </div>
+    <div class="ov-acts" id="dvActs">
+      <button class="cta" type="button" id="goPick" style="justify-content:center">Elegir mi pala</button>
+      <a class="cta" id="waWin" href="#" target="_blank" rel="noopener" style="justify-content:center" hidden>Soy el ganador · avisar al local</a>
+      <button class="ghost" type="button" id="dvClose" hidden>Ver las palas</button>
+    </div>
+    <p class="note" id="dvNote" style="margin:0">Simulación: en la demo, tu fila siempre gana.</p>
+  </div>
+</div>
+
+<!-- picker -->
+<div class="ov" id="pv" role="dialog" aria-modal="true" aria-label="Elegí tu pala">
+  <div class="ov-in" id="pvIn">
+    <div class="ov-cap"><span class="eyebrow">Ganaste · Fila <span id="pvFila">14</span></span><h2 class="h2">Elegí tu pala</h2></div>
+    <div class="pick"><div class="rail" id="pickRail"></div></div>
+    <div class="ov-acts on" id="pvActs">
+      <button class="cta" type="button" id="pickOk" style="justify-content:center" disabled>Tocá una pala</button>
+    </div>
+  </div>
+</div>
+
+<canvas class="fx" id="fx" hidden></canvas>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2, '0');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+  const buzz = ms => { try { if (navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(ms); } catch (e) {} };
+
+  /* ---------- links: el estado viaja en el #hash (solo letras, números y guiones) ---------- */
+  const ART = 'https://claude.ai/artifact/SCAcLTL1qBZggFnd8PxV9r';
+  /* en el artifact los links apuntan a claude.ai; en cualquier otro hosting, a la propia página */
+  const BASE = /claude|anthropic/.test(location.hostname) || location.protocol === 'file:' ? ART : location.origin + location.pathname;
+  const OFF = 3 * 3600e3; // Argentina, UTC-3
+  const toMin = t => Math.round(t / 6e4).toString(36);
+  const fromMin = s => (parseInt(s, 36) || 0) * 6e4;
+  const encRows = a => { let n = 0; for (let i = 33; i >= 1; i--) n = n * 3 + (a[i] || 0); return n.toString(36); };
+  const decRows = s => { const a = Array(34).fill(0); let n = parseInt(s, 36) || 0; for (let i = 1; i <= 33; i++) { a[i] = n % 3; n = Math.floor(n / 3); } return a; };
+  const toHex = s => [...new TextEncoder().encode(s)].map(b => b.toString(16).padStart(2, '0')).join('');
+  const fromHex = h => { try { return new TextDecoder().decode(new Uint8Array((h.match(/../g) || []).map(x => parseInt(x, 16)))); } catch (e) { return ''; } };
+  const onlyDigits = s => String(s || '').replace(/\D/g, '');
+  /* api.whatsapp.com directo: wa.me rompe los emojis al redirigir */
+  const waLink = (phone, text) => `https://api.whatsapp.com/send?${onlyDigits(phone) ? 'phone=' + onlyDigits(phone) + '&' : ''}text=${encodeURIComponent(text)}`;
+  const H = (() => { try { return decodeURIComponent(location.hash.slice(1)); } catch (e) { return ''; } })().toLowerCase().split('-');
+  let MODE = 'demo';
+  const CFG = { phone: '', draw: 0, upd: 0, rows: null };
+  if (H[0] === 's' && H.length >= 4) { MODE = 'live'; CFG.rows = decRows(H[1]); CFG.upd = fromMin(H[2]); CFG.draw = fromMin(H[3]); CFG.phone = onlyDigits(H[4]); }
+  else if (H[0] === 't' && H.length >= 4) { MODE = 'ticket'; CFG.fila = Math.min(33, Math.max(1, +H[1] || 1)); CFG.code = (H[2] || '0000').toUpperCase().slice(0, 4); CFG.draw = fromMin(H[3]); CFG.name = fromHex(H[4] || '').slice(0, 22); }
+  else if (H[0] === 'g' && H.length >= 3) { MODE = 'winner'; CFG.win = onlyDigits(H[1]).padStart(4, '0').slice(-4); CFG.draw = fromMin(H[2]); CFG.phone = onlyDigits(H[3]); }
+  else if (H[0] === 'panel') MODE = 'panel';
+  addEventListener('hashchange', () => location.reload());
+
+  /* ---------- data ---------- */
+  const ROWS = 33;
+  const nums = i => [i, i + 33, i + 66];
+  const ALL = Array.from({ length: 33 }, (_, k) => k + 1);
+  const FREE = new Set(MODE === 'live' ? ALL.filter(i => CFG.rows[i] === 0) : [3, 7, 11, 14, 18, 21, 25, 28, 30, 32]);
+  const RES = new Set(MODE === 'live' ? ALL.filter(i => CFG.rows[i] === 1) : []);
+  const state = { mine: null, name: '', selected: null, onlyFree: false, code: '' };
+  const isSold = i => !FREE.has(i) && state.mine !== i;
+
+  const PADDLES = [
+    { id: 'vertice', name: 'Vértice Pro', shape: 'diamond', tag: 'Potencia', forma: 'Diamante', nucleo: 'EVA dura', cara: 'Carbono 18K', peso: '365 g', face: 'url(#carbon)', band: '#e3ef4e', rim: '#0b1226' },
+    { id: 'curva', name: 'Curva Híbrida', shape: 'tear', tag: 'Polivalente', forma: 'Lágrima', nucleo: 'EVA media', cara: 'Carbono 12K', peso: '360 g', face: '#eef2fb', band: '#2456bd', rim: '#0b1226' },
+    { id: 'orbita', name: 'Órbita Control', shape: 'round', tag: 'Control', forma: 'Redonda', nucleo: 'EVA soft', cara: 'Fibra de vidrio', peso: '355 g', face: '#7cc0ff', band: '#091431', rim: '#0b1226' }
+  ];
+  const HEADS = {
+    round:   'M60 8C100 8 112 40 112 76C112 112 92 136 72 150L70 158H50L48 150C28 136 8 112 8 76C8 40 20 8 60 8Z',
+    tear:    'M60 6C98 6 112 30 112 62C112 100 92 132 72 150L70 158H50L48 150C28 132 8 100 8 62C8 30 22 6 60 6Z',
+    diamond: 'M60 4C90 4 112 18 112 46C112 82 96 118 72 150L70 158H50L48 150C24 118 8 82 8 46C8 18 30 4 60 4Z'
+  };
+  let uid = 0;
+  function paddleSVG(p) {
+    const k = 'pd' + (uid++);
+    let holes = '';
+    for (let y = 22, r = 0; y < 128; y += 11, r++)
+      for (let x = (r % 2 ? 19.5 : 14); x < 108; x += 11) holes += `<circle cx="${x}" cy="${y}" r="2.1"/>`;
+    return `<svg viewBox="0 0 120 220" aria-hidden="true">
+      <defs><clipPath id="${k}"><path d="${HEADS[p.shape]}"/></clipPath></defs>
+      <rect x="50" y="150" width="20" height="62" rx="6" fill="#121a2e"/>
+      <g stroke="rgba(255,255,255,.18)" stroke-width="2">${[162,172,182,192,202].map(y=>`<path d="M51 ${y}L69 ${y-6}"/>`).join('')}</g>
+      <rect x="46" y="206" width="28" height="9" rx="4" fill="${p.band}"/>
+      <path d="${HEADS[p.shape]}" fill="${p.rim}"/>
+      <g clip-path="url(#${k})">
+        <path d="${HEADS[p.shape]}" fill="${p.face}" transform="translate(60 80) scale(.93) translate(-60 -80)"/>
+        <path d="M-10 118L130 40V70L-10 148Z" fill="${p.band}" opacity=".95"/>
+        <g fill="rgba(5,12,34,.5)">${holes}</g>
+        <path d="M60 126L74 150H46Z" fill="#091431"/>
+      </g>
+      <path d="${HEADS[p.shape]}" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.5" transform="translate(60 80) scale(.93) translate(-60 -80)"/>
+    </svg>`;
+  }
+  function paddleCard(p, asButton) {
+    const tag = asButton ? 'button' : 'article';
+    return `<${tag} class="pcard" ${asButton ? `type="button" data-id="${p.id}" aria-pressed="false"` : ''}>
+      <div class="pv">${paddleSVG(p)}</div>
+      <div><span class="tag">${p.tag}</span><h3>${p.name}</h3>
+        <ul class="specs"><li><span>Forma</span><b>${p.forma}</b></li><li><span>Cara</span><b>${p.cara}</b></li><li><span>Núcleo</span><b>${p.nucleo}</b></li><li><span>Peso</span><b>${p.peso}</b></li></ul>
+      </div></${tag}>`;
+  }
+
+  /* ---------- cancha del hero, en perspectiva (metros reales: 10 × 20) ---------- */
+  (function heroCourt() {
+    const f = 784, d = 14, Hc = 16.1, hz = -201, cx = 200;
+    const P = (x, z, y = 0) => { const s = f / (z + d); return (cx + (x - 5) * s).toFixed(1) + ' ' + (hz + (Hc - y) * s).toFixed(1); };
+    const poly = pts => 'M' + pts.map(p => P(...p)).join('L') + 'Z';
+    const line = pts => 'M' + pts.map(p => P(...p)).join('L');
+    const quad = (x1, z1, x2, z2, y1, y2) => poly([[x1, z1, y1], [x2, z2, y1], [x2, z2, y2], [x1, z1, y2]]);
+    let walls = '';
+    for (let i = 0; i < 5; i++) walls += `<path d="${quad(i * 2, 20, i * 2 + 2, 20, 0, 3)}" class="gl"/>`;
+    walls += `<path d="${quad(0, 20, 10, 20, 3, 4)}" fill="url(#mesh)"/>`;
+    for (const x of [0, 10]) {
+      walls += `<path d="${quad(x, 20, x, 18, 0, 3)}" class="gl"/><path d="${quad(x, 18, x, 16, 0, 3)}" class="gl"/><path d="${quad(x, 16, x, 14, 0, 2)}" class="gl"/>`;
+      walls += `<path d="${quad(x, 14, x, -2, 0, 3)}" fill="url(#mesh)" opacity=".7"/>`;
+    }
+    const svg = `
+      <defs>
+        <pattern id="mesh" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M0 0L5 5M5 0L0 5" stroke="rgba(220,235,255,.22)" stroke-width=".6"/></pattern>
+        <linearGradient id="hturf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b45a3"/><stop offset="1" stop-color="#2a5fcc"/></linearGradient>
+        <radialGradient id="lamp" cx=".5" cy="0" r=".9"><stop offset="0" stop-color="rgba(255,255,255,.18)"/><stop offset="1" stop-color="rgba(255,255,255,0)"/></radialGradient>
+      </defs>
+      <path d="${poly([[-4, -3], [14, -3], [14, 21], [-4, 21]])}" fill="#11307a"/>
+      <path d="${poly([[0, 0], [10, 0], [10, 20], [0, 20]])}" fill="url(#hturf)"/>
+      <path d="${poly([[0, 0], [10, 0], [10, 20], [0, 20]])}" fill="url(#lamp)"/>
+      <g fill="none" stroke="rgba(200,225,255,.3)" stroke-width="1" style="--gl:rgba(200,225,255,.06)">${walls.replace(/class="gl"/g, 'fill="rgba(200,225,255,.07)"')}</g>
+      <g class="draw" fill="none" stroke="#eef3ff" stroke-width="2.2" stroke-linejoin="round" opacity=".8">
+        <path pathLength="1" d="${poly([[0, 0], [10, 0], [10, 20], [0, 20]])}"/>
+        <path pathLength="1" d="${line([[0, 3.05], [10, 3.05]])}"/>
+        <path pathLength="1" d="${line([[0, 16.95], [10, 16.95]])}"/>
+        <path pathLength="1" d="${line([[5, 3.05], [5, 16.95]])}"/>
+      </g>
+      <path d="${quad(-.4, 10, 10.4, 10, 0, .88)}" fill="url(#mesh)" stroke="none"/>
+      <path d="${line([[-.4, 10, .88], [10.4, 10, .88]])}" stroke="#eef3ff" stroke-width="3" fill="none"/>
+      <path d="${line([[-.4, 10, 0], [-.4, 10, .95]])}M${P(10.4, 10, 0)}L${P(10.4, 10, .95)}" stroke="#c9d6f2" stroke-width="3"/>`;
+    $('heroCourt').innerHTML = `<g transform="translate(0 62)">${svg.replace(/<defs>[\s\S]*?<\/defs>/, '')}</g>`.replace(/^/, svg.match(/<defs>[\s\S]*?<\/defs>/)[0]);
+  })();
+
+  /* ---------- countdown ---------- */
+  const DAYS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  function nextDraw() {
+    const art = new Date(Date.now() - OFF);
+    const d = new Date(Date.UTC(art.getUTCFullYear(), art.getUTCMonth(), art.getUTCDate(), 21, 0, 0));
+    d.setUTCDate(d.getUTCDate() + (6 - art.getUTCDay() + 7) % 7);
+    if (d.getTime() <= art.getTime()) d.setUTCDate(d.getUTCDate() + 7);
+    return { t: d.getTime() + OFF, d };
+  }
+  const draw = { t: CFG.draw || nextDraw().t };
+  const dd = new Date(draw.t - OFF);
+  const hhmm = d => d.getUTCMinutes() ? `${d.getUTCHours()}:${pad(d.getUTCMinutes())} h` : `${d.getUTCHours()} h`;
+  $('when').textContent = `${DAYS[dd.getUTCDay()].slice(0,3)} ${dd.getUTCDate()}/${dd.getUTCMonth()+1} · ${hhmm(dd)}`;
+  const whenLong = `${DAYS[dd.getUTCDay()]} ${dd.getUTCDate()} de ${MONTHS[dd.getUTCMonth()]} · ${hhmm(dd)}`;
+  if (MODE === 'live' && CFG.upd) {
+    const u = new Date(CFG.upd - OFF), now = new Date(Date.now() - OFF);
+    const sameDay = u.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
+    $('upd').textContent = `Filas actualizadas: ${sameDay ? 'hoy' : `${u.getUTCDate()}/${u.getUTCMonth() + 1}`} ${u.getUTCHours()}:${pad(u.getUTCMinutes())}`;
+    $('upd').hidden = false;
+  }
+  const cd = ['d','h','m','s'].map(k => $('cd-' + k));
+  function tickCount() {
+    let ms = Math.max(0, draw.t - Date.now());
+    const s = Math.floor(ms / 1000);
+    const v = [Math.floor(s / 86400), Math.floor(s % 86400 / 3600), Math.floor(s % 3600 / 60), s % 60].map(pad);
+    v.forEach((x, i) => {
+      if (cd[i].textContent !== x) {
+        cd[i].textContent = x;
+        if (!reduce) { cd[i].classList.remove('tick'); void cd[i].offsetWidth; cd[i].classList.add('tick'); }
+      }
+    });
+    $('tCount').textContent = `${v[0]}d ${v[1]}:${v[2]}:${v[3]}`;
+  }
+  tickCount(); setInterval(tickCount, 1000);
+
+  /* ---------- progress + grid ---------- */
+  const segs = $('segs'), grid = $('grid');
+  for (let i = 1; i <= ROWS; i++) {
+    segs.insertAdjacentHTML('beforeend', `<i class="seg" data-i="${i}"></i>`);
+    grid.insertAdjacentHTML('beforeend', `<button type="button" class="row" data-i="${i}"><span class="f">Fila ${i}</span><span class="n num">${nums(i).map(pad).join('<i>·</i>')}</span></button>`);
+  }
+  function render() {
+    const freeN = FREE.size;
+    $('soldN').textContent = ROWS - freeN;
+    $('leftN').textContent = freeN ? `Quedan ${freeN}` : 'Completa';
+    $('barT').textContent = `Quedan ${freeN} filas`;
+    segs.querySelectorAll('.seg').forEach(s => {
+      const i = +s.dataset.i;
+      s.classList.toggle('free', FREE.has(i));
+      s.classList.toggle('mine', state.mine === i);
+    });
+    grid.querySelectorAll('.row').forEach(r => {
+      const i = +r.dataset.i;
+      const mine = state.mine === i;
+      r.classList.toggle('mine', mine);
+      r.classList.toggle('free', FREE.has(i));
+      r.classList.toggle('sold', isSold(i));
+      r.classList.toggle('res', RES.has(i) && !mine);
+      r.setAttribute('aria-label', `Fila ${i}, números ${nums(i).map(pad).join(', ')}, ${mine ? 'tuya' : FREE.has(i) ? 'libre' : RES.has(i) ? 'reservada' : 'vendida'}`);
+    });
+    const chip = $('mychip');
+    chip.classList.toggle('on', !!state.mine);
+    if (state.mine) $('mychipT').innerHTML = `Tu fila: <b>${state.mine}</b> · ${nums(state.mine).map(pad).join(' · ')}`;
+  }
+  render();
+
+  grid.addEventListener('click', e => {
+    const r = e.target.closest('.row'); if (!r) return;
+    const i = +r.dataset.i;
+    if (state.mine === i) return openReveal(false);
+    if (!FREE.has(i)) { r.animate([{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}], {duration: 220}); return; }
+    openSheet(i);
+  });
+  const gotoRows = () => document.getElementById('filas').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  $('ctaHero').onclick = gotoRows; $('ctaBar').onclick = gotoRows;
+  $('mychip').onclick = () => openReveal(false);
+  $('fAll').onclick = () => setFilter(false); $('fFree').onclick = () => setFilter(true);
+  function setFilter(v) { state.onlyFree = v; grid.classList.toggle('only-free', v); $('fAll').setAttribute('aria-pressed', !v); $('fFree').setAttribute('aria-pressed', v); }
+
+  /* finder */
+  $('buscar').addEventListener('input', e => {
+    const raw = e.target.value.replace(/\D/g, ''); e.target.value = raw;
+    const msg = $('fmsg');
+    if (!raw) { msg.textContent = ''; return; }
+    const n = +raw;
+    if (raw.length < 2 && n < 10 && n > 0) { /* espera el 2.º dígito si escribe 0-9 */ }
+    if (n < 1 || n > 99) { msg.textContent = 'Los números van del 01 al 99.'; return; }
+    const i = (n - 1) % 33 + 1;
+    const r = grid.querySelector(`.row[data-i="${i}"]`);
+    if (state.onlyFree && isSold(i)) setFilter(false);
+    msg.innerHTML = state.mine === i ? `<span>El <b>${pad(n)}</b> está en tu fila ${i}.</span>` : FREE.has(i)
+      ? `<span>El <b>${pad(n)}</b> está en la fila ${i}: <b>libre</b>.</span><button class="ghost go" type="button" data-i="${i}">Reservar</button>`
+      : `<span>El ${pad(n)} está en la fila ${i}, que ya se vendió. Probá con otro.</span>`;
+    r.classList.remove('hl'); void r.offsetWidth; r.classList.add('hl');
+  });
+  $('fmsg').addEventListener('click', e => { const b = e.target.closest('.go'); if (b) { $('buscar').blur(); openSheet(+b.dataset.i); } });
+
+  /* sticky bar */
+  const bar = $('bar');
+  function barCheck() {
+    const sec = $('filas').getBoundingClientRect();
+    const inRows = sec.top < innerHeight * .75 && sec.bottom > innerHeight * .25;
+    bar.classList.toggle('on', (MODE === 'demo' || MODE === 'live') && $('ctaHero').getBoundingClientRect().bottom < 0 && !inRows && !document.body.dataset.modal && FREE.size > 0);
+  }
+  addEventListener('scroll', barCheck, { passive: true }); addEventListener('resize', barCheck);
+
+  /* toast + live sale */
+  let toastT;
+  function toast(t) { $('toastT').textContent = t; const el = $('toast'); el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 3600); }
+  if (MODE === 'demo') setTimeout(() => {
+    const cand = [30, 25, 7].find(i => FREE.has(i) && state.selected !== i && state.mine !== i);
+    if (!cand || document.body.dataset.modal) return;
+    FREE.delete(cand); render();
+    grid.querySelector(`.row[data-i="${cand}"]`).classList.add('gone');
+    segs.querySelector(`.seg[data-i="${cand}"]`).classList.add('flash');
+    toast(`Se reservó la fila ${cand} · quedan ${FREE.size}`);
+  }, 15000);
+
+  /* ---------- sheet ---------- */
+  function modal(on) { if (on) { document.body.dataset.modal = '1'; bar.classList.remove('on'); } else { delete document.body.dataset.modal; barCheck(); } }
+  function openSheet(i) {
+    state.selected = i;
+    $('shTitle').textContent = `Fila ${i}`;
+    $('shNums').innerHTML = nums(i).map(n => `<div class="num">${pad(n)}</div>`).join('');
+    $('shDemo').hidden = MODE === 'live'; $('shLive').hidden = MODE !== 'live';
+    if (MODE === 'live') resLink();
+    $('scrim').classList.add('on'); $('sheet').classList.add('on'); modal(true);
+  }
+  function resLink() {
+    const i = state.selected; if (!i) return;
+    const nm = $('nombre').value.trim();
+    $('waRes').href = waLink(CFG.phone, `¡Hola! Quiero reservar la fila ${i} (${nums(i).map(pad).join(' · ')}) del Sorteo N° 143 🎾${nm ? ` Soy ${nm}.` : ''}`);
+  }
+  $('nombre').addEventListener('input', resLink);
+  $('waRes').addEventListener('click', () => { setTimeout(() => { closeSheet(); toast('Mandá el mensaje en WhatsApp para reservar'); }, 400); });
+  function closeSheet() { $('scrim').classList.remove('on'); $('sheet').classList.remove('on'); $('pnSheet').classList.remove('on'); state.selected = null; modal(false); }
+  $('shClose').onclick = closeSheet; $('scrim').onclick = closeSheet;
+  $('shForm').addEventListener('submit', e => { e.preventDefault(); MODE === 'live' ? $('waRes').click() : $('confirm').click(); });
+  $('copy').onclick = () => {
+    const t = $('alias').textContent;
+    const ok = () => { $('copy').textContent = 'Copiado'; setTimeout(() => $('copy').textContent = 'Copiar', 1600); };
+    try {
+      navigator.clipboard.writeText(t).then(ok, selectAlias);
+    } catch (e) { selectAlias(); }
+    function selectAlias() { const r = document.createRange(); r.selectNodeContents($('alias')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  };
+  $('confirm').onclick = () => {
+    const i = state.selected; if (!i) return;
+    state.name = ($('nombre').value.trim() || 'Jugador/a').slice(0, 22);
+    FREE.delete(i); state.mine = i;
+    const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    state.code = `BP-143-${pad(i)}-` + Array.from({ length: 4 }, () => abc[Math.floor(Math.random() * abc.length)]).join('');
+    $('scrim').classList.remove('on'); $('sheet').classList.remove('on');
+    render();
+    setTimeout(() => openReveal(true), 250);
+  };
+
+  /* ---------- reveal ---------- */
+  const SPOTS = [[.66, .30], [.33, .70], [.83, .68]];
+  const spots = [0, 1, 2].map(k => $('sp' + k));
+  SPOTS.forEach((p, k) => { spots[k].style.left = p[0] * 100 + '%'; spots[k].style.top = p[1] * 100 + '%'; });
+  const ball = $('ball'), bsh = $('bsh');
+  function arc(from, to, dur, H) {
+    return new Promise(res => {
+      if (reduce) return res();
+      const t0 = performance.now();
+      (function f(now) {
+        const t = Math.min(1, (now - t0) / dur);
+        const x = from[0] + (to[0] - from[0]) * t, y = from[1] + (to[1] - from[1]) * t;
+        const h = 4 * H * t * (1 - t);
+        ball.style.transform = `translate(${x}px,${y - h}px) scale(${1 + h / 55}) rotate(${t * 540}deg)`;
+        bsh.style.transform = `translate(${x}px,${y}px) scale(${1 - h / 110})`;
+        bsh.style.opacity = String(Math.max(.1, .6 - h / 90));
+        t < 1 ? requestAnimationFrame(f) : res();
+      })(t0);
+    });
+  }
+  let playing = false;
+  async function openReveal(fresh) {
+    const i = state.mine; if (!i) return;
+    modal(true);
+    const n = nums(i);
+    $('tFila').textContent = i;
+    $('tNums').textContent = n.map(pad).join(' · ');
+    $('tName').textContent = state.name;
+    $('tWhen').textContent = whenLong;
+    $('tCode').textContent = state.code;
+    const ov = $('ov');
+    if (!fresh) {
+      spots.forEach((s, k) => { s.textContent = pad(n[k]); s.classList.add('hit'); });
+      $('tbody').classList.add('open'); $('ovActs').classList.add('on');
+      $('ovEy').textContent = 'Tu ticket'; $('ovH').textContent = `Fila ${i}`;
+      ov.classList.add('on'); return;
+    }
+    if (playing) return; playing = true;
+    spots.forEach(s => { s.textContent = '?'; s.classList.remove('hit'); });
+    $('tbody').classList.remove('open'); $('ovActs').classList.remove('on');
+    $('ovEy').textContent = 'Emitiendo ticket'; $('ovH').textContent = '¡Saque!';
+    const lines = $('tlines'); lines.classList.remove('draw'); void lines.offsetWidth; lines.classList.add('draw');
+    ball.style.opacity = 0; bsh.style.opacity = 0;
+    ov.classList.add('on');
+    await wait(1100);
+    const rc = $('tcourt').getBoundingClientRect();
+    const P = (x, y) => [x * rc.width, y * rc.height];
+    if (!reduce) { ball.style.opacity = 1; }
+    const hops = [[P(-.04, .92), P(...SPOTS[0]), 620, 70], [P(...SPOTS[0]), P(...SPOTS[1]), 560, 55], [P(...SPOTS[1]), P(...SPOTS[2]), 520, 48]];
+    for (let k = 0; k < 3; k++) {
+      await arc(...hops[k]);
+      spots[k].textContent = pad(n[k]); spots[k].classList.add('hit'); buzz(14);
+      if (k === 0) $('ovH').textContent = 'Primer número';
+      if (k === 1) $('ovH').textContent = 'Segundo';
+      if (k === 2) $('ovH').textContent = '¡Y el tercero!';
+    }
+    await arc(P(...SPOTS[2]), P(1.03, .42), 260, 16);
+    ball.style.opacity = 0; bsh.style.opacity = 0;
+    const g = $('gfx'); g.classList.remove('go'); void g.offsetWidth; g.classList.add('go'); buzz([10, 40, 10]);
+    await wait(280);
+    $('tbody').classList.add('open');
+    $('ovEy').textContent = 'Ticket emitido'; $('ovH').textContent = `Fila ${i} · ¡Suerte!`;
+    await wait(500);
+    $('ovActs').classList.add('on');
+    playing = false;
+  }
+  $('ovClose').onclick = () => { $('ov').classList.remove('on'); modal(false); toast(`Tu fila ${state.mine} quedó reservada`); };
+
+  /* ---------- draw simulation ---------- */
+  const reels = $('reels');
+  for (let k = 0; k < 4; k++) {
+    let s = ''; for (let r = 0; r < 4; r++) for (let d = 0; d < 10; d++) s += `<div>${d}</div>`;
+    reels.insertAdjacentHTML('beforeend', `<div class="reel num"><div class="strip">${s}</div></div>`);
+  }
+  $('simDraw').onclick = () => {
+    const n = nums(state.mine)[Math.floor(Math.random() * 3)];
+    runDraw([1 + Math.floor(Math.random() * 9), Math.floor(Math.random() * 10), Math.floor(n / 10), n % 10], false);
+  };
+  async function runDraw(digits, real) {
+    const n = digits[2] * 10 + digits[3];
+    const win = n ? (n - 1) % 33 + 1 : 0;
+    const dv = $('dv');
+    modal(true);
+    const rs = [...reels.children];
+    rs.forEach(r => { r.classList.remove('key'); const st = r.firstChild; st.style.transition = 'none'; st.style.transform = 'translateY(0)'; });
+    $('verdict').textContent = 'Sorteando…'; $('dvActs').classList.remove('on');
+    $('ov').classList.remove('on'); dv.classList.add('on');
+    await wait(450);
+    const h = rs[0].clientHeight;
+    rs.forEach((r, k) => {
+      const st = r.firstChild; void st.offsetWidth;
+      st.style.transition = reduce ? 'none' : `transform ${1.5 + k * .45}s cubic-bezier(.15,.75,.2,1)`;
+      st.style.transform = `translateY(-${(30 + digits[k]) * h}px)`;
+    });
+    await wait(1500 + 3 * 450 + 200);
+    rs[2].classList.add('key'); rs[3].classList.add('key'); buzz(20);
+    await wait(500);
+    if (!real) $('verdict').innerHTML = `<b>¡Ganó la fila ${state.mine}!</b>Termina en ${pad(n)}, uno de tus números.`;
+    else if (!win) $('verdict').innerHTML = `<b>Terminó en 00</b>El 00 no está en juego. El local te avisa cómo sigue.`;
+    else {
+      $('verdict').innerHTML = `<b>¡Ganó la fila ${win}!</b>Terminó en ${pad(n)} · números ${nums(win).map(pad).join(' · ')}`;
+      $('waWin').href = waLink(CFG.phone, `¡Hola! Gané el Sorteo N° 143 con la fila ${win} (${nums(win).map(pad).join(' · ')}). Quiero elegir mi pala 🎾`);
+    }
+    if (!real || win) burst();
+    await wait(600);
+    $('dvActs').classList.add('on');
+  }
+
+  /* ---------- picker ---------- */
+  $('rail').innerHTML = PADDLES.map(p => paddleCard(p, false)).join('');
+  $('pickRail').innerHTML = PADDLES.map(p => paddleCard(p, true)).join('');
+  const rail = $('rail'), dots = [...$('dots').children];
+  rail.addEventListener('scroll', () => {
+    const cards = [...rail.children]; const x = rail.scrollLeft;
+    let best = 0, bd = 1e9; cards.forEach((c, k) => { const d = Math.abs(c.offsetLeft - rail.offsetLeft - 16 - x); if (d < bd) { bd = d; best = k; } });
+    if (rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 4) best = cards.length - 1;
+    dots.forEach((d, k) => d.classList.toggle('on', k === best));
+  }, { passive: true });
+  let picked = null;
+  $('goPick').onclick = () => { $('dv').classList.remove('on'); $('pvFila').textContent = state.mine; $('pv').classList.add('on'); };
+  $('pickRail').addEventListener('click', e => {
+    const c = e.target.closest('.pcard'); if (!c) return;
+    picked = PADDLES.find(p => p.id === c.dataset.id);
+    $('pickRail').querySelectorAll('.pcard').forEach(x => x.setAttribute('aria-pressed', x === c));
+    const b = $('pickOk'); b.disabled = false; b.textContent = `Me llevo la ${picked.name}`;
+    buzz(10);
+  });
+  $('pickOk').onclick = () => {
+    if (!picked) return;
+    $('pvIn').innerHTML = `<div class="won">${paddleSVG(picked)}
+      <span class="eyebrow">Fila ${state.mine} · Sorteo N° 143</span>
+      <h2 class="h2">${state.name === 'Jugador/a' ? '¡La pala es tuya!' : `¡Es tuya, ${escapeHTML(state.name)}!`}</h2>
+      <p style="margin:0;color:var(--dim)">Elegiste la <b style="color:var(--ink)">${picked.name}</b>. El local te escribe para coordinar la entrega.</p>
+      <button class="ghost" type="button" id="restart" style="margin-top:8px">Volver al inicio</button></div>`;
+    burst();
+    $('restart').onclick = () => location.reload();
+  };
+  /* ---------- modos: ticket y ganador por link ---------- */
+  function onlyStory() {
+    ['progBox', 'ctaHero', 'mini', 'filas'].forEach(id => $(id).hidden = true);
+    try { history.scrollRestoration = 'manual'; } catch (e) {}
+    scrollTo(0, 0);
+  }
+  if (MODE === 'live') document.querySelector('.prog-h .left').lastChild.textContent = ' de 33 filas ocupadas';
+  if (MODE === 'ticket') {
+    onlyStory();
+    state.mine = CFG.fila; state.name = CFG.name || 'Jugador/a'; state.code = `BP-143-${pad(CFG.fila)}-${CFG.code}`;
+    render();
+    $('mychipT').innerHTML = `Tu fila: <b>${state.mine}</b> · ${nums(state.mine).map(pad).join(' · ')}`;
+    $('simDraw').textContent = 'Ver la animación de nuevo';
+    $('simDraw').onclick = () => openReveal(true);
+    $('ovClose').textContent = 'Ver el sorteo y las palas';
+    $('ovClose').onclick = () => { $('ov').classList.remove('on'); modal(false); };
+    setTimeout(() => openReveal(true), 450);
+  }
+  if (MODE === 'winner') {
+    onlyStory();
+    $('goPick').hidden = true; $('waWin').hidden = false; $('dvClose').hidden = false;
+    $('dvNote').textContent = 'Resultado cargado por el local según la Lotería Nocturna.';
+    $('dvClose').onclick = () => { $('dv').classList.remove('on'); modal(false); };
+    setTimeout(() => runDraw(CFG.win.split('').map(Number), true), 400);
+  }
+
+  /* ---------- panel del local (guarda en este celular; comparte por link) ---------- */
+  if (MODE === 'panel') initPanel();
+  function initPanel() {
+    document.querySelector('header.hero').hidden = true;
+    document.querySelector('main').hidden = true;
+    $('panel').hidden = false;
+    const KEY = 'wrapi-rifa-panel-143';
+    let P = null;
+    try { P = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    const fresh = () => ({ rows: Array(34).fill(0), names: {}, codes: {}, phone: '', draw: nextDraw().t });
+    if (!P || !Array.isArray(P.rows) || P.rows.length !== 34) P = fresh();
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) {} };
+    const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    const newCode = () => Array.from({ length: 4 }, () => abc[Math.floor(Math.random() * abc.length)]).join('');
+    const pg = $('pnGrid');
+    ALL.forEach(i => pg.insertAdjacentHTML('beforeend', `<button type="button" class="row" data-i="${i}"><span class="f">Fila ${i}</span><span class="n num">${nums(i).map(pad).join('<i>·</i>')}</span><span class="who"></span></button>`));
+    const pub = () => `${BASE}#s-${encRows(P.rows)}-${toMin(Date.now())}-${toMin(P.draw)}${P.phone ? '-' + P.phone : ''}`;
+    const tLink = i => `${BASE}#t-${i}-${P.codes[i]}-${toMin(P.draw)}${P.names[i] ? '-' + toHex(P.names[i]) : ''}`;
+    function shareHref() {
+      const libres = ALL.filter(i => P.rows[i] === 0).length;
+      $('pnShare').href = waLink('', `🎾 Sorteo N° 143 · Ganador elige\nQuedan ${libres} filas a $10.000. Elegí la tuya acá:\n${pub()}`);
+      $('pnView').href = pub();
+    }
+    function paint() {
+      let v = 0, r = 0;
+      pg.querySelectorAll('.row').forEach(b => {
+        const i = +b.dataset.i, s = P.rows[i];
+        if (s === 2) v++; if (s === 1) r++;
+        b.classList.toggle('pres', s === 1); b.classList.toggle('psold', s === 2); b.classList.toggle('free', s === 0);
+        b.querySelector('.who').textContent = s ? (P.names[i] || (s === 1 ? 'Reservada' : 'Vendida')) : '';
+        b.setAttribute('aria-label', `Fila ${i}, ${['libre', 'reservada', 'vendida'][s]}${P.names[i] ? ', ' + P.names[i] : ''}`);
+      });
+      $('pnV').textContent = v; $('pnR').textContent = r; $('pnL').textContent = 33 - v - r;
+      shareHref();
+    }
+    ['pointerdown', 'focus'].forEach(ev => { $('pnShare').addEventListener(ev, shareHref); $('pnView').addEventListener(ev, shareHref); });
+
+    /* hoja de una fila */
+    let cur = null;
+    function sheetPaint() {
+      const s = P.rows[cur];
+      $('pnSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.s === s));
+      const ok = s === 2;
+      $('pnTicket').setAttribute('aria-disabled', !ok);
+      $('pnTicketNote').hidden = ok;
+      if (ok) {
+        if (!P.codes[cur]) { P.codes[cur] = newCode(); save(); }
+        const nm = P.names[cur] ? ` ${P.names[cur]}` : '';
+        $('pnTicket').href = waLink('', `¡Listo${nm}! 🎾 Este es tu ticket del Sorteo N° 143 · fila ${cur} (${nums(cur).map(pad).join(' · ')}):\n${tLink(cur)}`);
+      }
+    }
+    pg.addEventListener('click', e => {
+      const b = e.target.closest('.row'); if (!b) return;
+      cur = +b.dataset.i;
+      $('pnT').textContent = `Fila ${cur}`;
+      $('pnNums').innerHTML = nums(cur).map(n => `<div class="num">${pad(n)}</div>`).join('');
+      $('pnName').value = P.names[cur] || '';
+      sheetPaint();
+      $('scrim').classList.add('on'); $('pnSheet').classList.add('on'); modal(true);
+    });
+    $('pnSeg').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b || !cur) return;
+      P.rows[cur] = +b.dataset.s;
+      if (P.rows[cur] === 0) { delete P.names[cur]; delete P.codes[cur]; $('pnName').value = ''; }
+      save(); paint(); sheetPaint(); buzz(10);
+    });
+    $('pnName').addEventListener('input', e => {
+      const v = e.target.value.trim().slice(0, 22);
+      if (v) P.names[cur] = v; else delete P.names[cur];
+      if (v && P.rows[cur] === 0) P.rows[cur] = 1;
+      save(); paint(); sheetPaint();
+    });
+    $('pnClose').onclick = closeSheet;
+
+    /* datos */
+    const toInput = t => new Date(t - OFF).toISOString().slice(0, 16);
+    $('pnPhone').value = P.phone;
+    $('pnDraw').value = toInput(P.draw);
+    $('pnPhone').addEventListener('input', e => { P.phone = onlyDigits(e.target.value); save(); shareHref(); winPaint(); });
+    $('pnDraw').addEventListener('change', e => { const t = Date.parse(e.target.value + ':00Z'); if (t) { P.draw = t + OFF; save(); shareHref(); winPaint(); } });
+
+    /* copiar */
+    $('pnCopy').onclick = () => {
+      const t = pub(), out = $('pnOut');
+      const ok = () => { $('pnCopy').textContent = 'Copiado'; setTimeout(() => $('pnCopy').textContent = 'Copiar link', 1600); };
+      const fallback = () => { out.hidden = false; out.value = t; out.focus(); out.select(); $('pnCopy').textContent = 'Copialo de abajo'; };
+      try { navigator.clipboard.writeText(t).then(ok, fallback); } catch (e) { fallback(); }
+    };
+
+    /* resultado */
+    function winPaint() {
+      const w = onlyDigits($('pnWin').value);
+      const msg = $('pnWinMsg'), btn = $('pnWinShare');
+      if (w.length < 4) { msg.textContent = w ? 'Faltan cifras: son 4.' : ''; btn.hidden = true; return; }
+      const n = +w.slice(-2), f = n ? (n - 1) % 33 + 1 : 0;
+      msg.innerHTML = !f ? 'Termina en 00: ese número no está en juego.'
+        : `Termina en <b>${pad(n)}</b> → gana la <b>fila ${f}</b>${P.names[f] ? ` (${escapeHTML(P.names[f])})` : P.rows[f] ? '' : ' · ojo: figura libre'}.`;
+      btn.hidden = !f;
+      btn.href = waLink('', `🏆 Resultado del Sorteo N° 143\n${BASE}#g-${w}-${toMin(P.draw)}${P.phone ? '-' + P.phone : ''}`);
+    }
+    $('pnWin').addEventListener('input', e => { e.target.value = onlyDigits(e.target.value).slice(0, 4); winPaint(); });
+
+    /* reiniciar con confirmación en la página */
+    let armed = false, armT;
+    $('pnReset').onclick = () => {
+      if (!armed) { armed = true; $('pnReset').textContent = 'Tocá de nuevo para borrar todas las filas'; armT = setTimeout(() => { armed = false; $('pnReset').textContent = 'Empezar un sorteo nuevo'; }, 4000); return; }
+      clearTimeout(armT); armed = false;
+      const keep = { phone: P.phone, draw: P.draw };
+      P = Object.assign(fresh(), keep); save(); paint();
+      $('pnReset').textContent = 'Listo: todas las filas quedaron libres';
+      setTimeout(() => $('pnReset').textContent = 'Empezar un sorteo nuevo', 2500);
+    };
+    paint();
+  }
+
+  function escapeHTML(s) { return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  /* ---------- lluvia de pelotas ---------- */
+  function burst() {
+    if (reduce) return;
+    const cv = $('fx'); cv.hidden = false;
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    const W = cv.width = innerWidth * dpr, H = cv.height = innerHeight * dpr;
+    const ctx = cv.getContext('2d');
+    const bs = Array.from({ length: 34 }, () => ({ x: Math.random() * W, y: -Math.random() * H * .6 - 20, vx: (Math.random() - .5) * 4 * dpr, vy: Math.random() * 2 * dpr, r: (7 + Math.random() * 7) * dpr, a: Math.random() * 6, va: (Math.random() - .5) * .3 }));
+    const t0 = performance.now();
+    (function f(now) {
+      const el = now - t0;
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalAlpha = el > 2600 ? Math.max(0, 1 - (el - 2600) / 600) : 1;
+      for (const b of bs) {
+        b.vy += .45 * dpr; b.x += b.vx; b.y += b.vy; b.a += b.va;
+        if (b.y > H - b.r) { b.y = H - b.r; b.vy *= -.62; b.vx *= .9; }
+        ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a);
+        ctx.fillStyle = '#e3ef4e'; ctx.beginPath(); ctx.arc(0, 0, b.r, 0, 7); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1.4 * dpr;
+        ctx.beginPath(); ctx.arc(-b.r * 1.35, 0, b.r, -.75, .75); ctx.stroke();
+        ctx.beginPath(); ctx.arc(b.r * 1.35, 0, b.r, Math.PI - .75, Math.PI + .75); ctx.stroke();
+        ctx.restore();
+      }
+      if (el < 3200) requestAnimationFrame(f); else { ctx.clearRect(0, 0, W, H); cv.hidden = true; }
+    })(t0);
+  }
+})();
+</script>
+</body></html>
